@@ -1,0 +1,4 @@
+﻿Name,Quantity,Component
+"UBrain",1," Arduino Uno R3"
+"SB1, SB2, SB3, SB4-FingerPress",4," Pushbutton"
+"RR1, RR2, RR3, RR4",4,"1 kΩ Resistor"
