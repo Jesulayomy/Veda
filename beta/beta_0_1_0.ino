@@ -36,7 +36,6 @@ void loop() {
   Student student3 = {"Kenny", 20171374};
 
   lcd.clear();
-  lcd.setCursor(0, 0);
   lcd.print("Stand By");
   Serial.println("Stand By");
 
@@ -50,7 +49,6 @@ void loop() {
   	if (digitalRead(b1) == HIGH) {
    	  Serial.println("Deleting a student");
       lcd.clear();
-      lcd.setCursor(0, 0);
       lcd.print(student2.name);
       lcd.setCursor(9, 1);
       lcd.print("Deleted");
@@ -60,7 +58,6 @@ void loop() {
   	else if (digitalRead(b2) == HIGH) {
       Serial.println("Registering new student");
       lcd.clear();
-      lcd.setCursor(0, 0);
       lcd.print("New Student");
       lcd.setCursor(0, 1);
       lcd.print(student1.name);
@@ -70,7 +67,6 @@ void loop() {
   	else if (digitalRead(b3) == HIGH) {
       Serial.println("Reset was pressed");
       lcd.clear();
-      lcd.setCursor(0, 0);
       lcd.print("Resetting Data");
       delay(1000);
       continue;
@@ -79,7 +75,6 @@ void loop() {
       Serial.println("New finger Placed");
       Serial.println("Press b1 to Cancel or b2 to Register");
       lcd.clear();
-      lcd.setCursor(0, 0);
       lcd.print("b1: Cancel");
       lcd.setCursor(0, 1);
       lcd.print("b2: Register");
@@ -91,14 +86,12 @@ void loop() {
   	    if (digitalRead(b1) == HIGH) {
    	      Serial.println("Cancel new student Registration");
           lcd.clear();
-          lcd.setCursor(0, 0);
           lcd.print("Cancelled");
           delay(500);
   	    }
   	    else if (digitalRead(b2) == HIGH) {
           Serial.println("New student added");
           lcd.clear();
-          lcd.setCursor(0, 0);
           lcd.print("Registration");
           lcd.setCursor(0, 1);
           lcd.print("Successful");
@@ -109,7 +102,6 @@ void loop() {
   	else if (digitalRead(b5) == HIGH) {
       Serial.println("Admit existing student");
       lcd.clear();
-      lcd.setCursor(0, 0);
       lcd.print("Welcome");
       lcd.setCursor(8, 0);
       lcd.print(student3.name);
