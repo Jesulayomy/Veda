@@ -1,0 +1,5 @@
+﻿Name,Quantity,Component
+"UBrain",1," Arduino Uno R3"
+"SB1, SB2, SB3, SB4, SB5",5," Pushbutton"
+"RR1, RR2, RR3, RR4, R1",5,"1 kΩ Resistor"
+"U1",1,"PCF8574-based, 32 LCD 16 x 2 (I2C)"

@@ -1,27 +1,26 @@
 #include <LiquidCrystal_I2C.h>
 #include <string.h>
+#include <Wire.h>
 
-#define b1 2
-#define b2 3
-#define b3 4
-#define b4 5
-#define b5 6
+#define CNC 3
+#define REG 4
+#define RST 8
 
 struct Student {
  String name;
  long int matric;
 };
 
-LiquidCrystal_I2C lcd(0x20, 16, 2); //  Declare 1602 LCD screen confix at 0x20 address
+LiquidCrystal_I2C lcd(0x27, 16, 2); //  Declare 1602 LCD screen confix at 0x27 address
 
 
 void setup()
 {
-  pinMode(b1, INPUT); // Initialize buttons
-  pinMode(b2, INPUT);
-  pinMode(b3, INPUT);
-  pinMode(b4, INPUT);
-  Serial.begin(9600);
+  pinMode(CNC, INPUT_PULLUP); // Initialize buttons
+  pinMode(REG, INPUT_PULLUP);
+  pinMode(RST, INPUT_PULLUP);
+
+  Serial.begin(115200);
   lcd.init(); // Initialize lcd
   lcd.backlight();
   lcd.setCursor(0, 0); // Set the cursor at 0,0 (Top Left)
