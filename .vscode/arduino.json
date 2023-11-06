@@ -1,5 +1,0 @@
-{
-    "board": "arduino:avr:uno",
-    "programmer": "arduinoasisp",
-    "sketch": "tests\\fingerprint\\enroll\\enroll.ino"
-}

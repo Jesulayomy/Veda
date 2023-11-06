@@ -24,7 +24,7 @@ SoftwareSerial Serial1(6, 7); // RX, TX
 char server[] = "arduino.tips";
 
 unsigned long lastConnectionTime = 0;         // last time you connected to the server, in milliseconds
-const unsigned long postingInterval = 10000L; // delay between updates, in milliseconds
+const unsigned long postingInterval = 15000L; // delay between updates, in milliseconds
 
 // Initialize the Ethernet client object
 WiFiEspClient client;
@@ -38,6 +38,9 @@ WiFiEspClient client;
 // const char * myCounterReadAPIKey = SECRET_READ_APIKEY_COUNTER;
 // unsigned int counterFieldNumber = 1; 
 
+unsigned long startTime;
+unsigned long elapsedTime;
+
 void setup() {
  //Initialize serial and wait for port to open
   Serial.begin(115200);  
@@ -48,11 +51,8 @@ void setup() {
   // initialize serial for ESP module  
   setEspBaudRate(ESP_BAUDRATE);
 
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo native USB port only
-  }
-
-  Serial.print("Searching for ESP8266..."); 
+  startTime = millis();
+  Serial.print("Searching for ESP8266...");
   // initialize ESP module
   WiFi.init(&Serial1);
 
@@ -80,6 +80,9 @@ void setup() {
     Serial.println("\nConnected");
   }
 
+  unsigned long after = millis();
+  elapsedTime = after - startTime;
+  Serial.print("Connected in:"); Serial.println(elapsedTime);
   // ThingSpeak.begin(client);  // Initialize ThingSpeak
   Serial.println();
   Serial.println("Starting connection to server...");
@@ -145,6 +148,7 @@ void httpRequest()
   // close any connection before send a new request
   // this will free the socket on the WiFi shield
   client.stop();
+  delay(5000);
 
   // if there's a successful connection
   if (client.connect(server, 80)) {

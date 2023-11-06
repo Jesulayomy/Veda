@@ -64,7 +64,7 @@ void setup()
   finger.getTemplateCount();
 
   if (finger.templateCount == 0) {
-    Serial.print("Sensor doesn't contain any fingerprint data. Please run the 'enroll' example.");
+    Serial.println("Sensor doesn't contain any fingerprint data. Please run the 'enroll' example.");
     lcd.clear();
     lcd.print("No data");
   }
@@ -77,6 +77,8 @@ void setup()
     lcd.print("/");
     lcd.print(finger.capacity);
   }
+  lcd.clear();
+  lcd.print("Place finger");
 }
 
 void loop()                     // run over and over again

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Student Attendance</title>
+    <!-- Meta Tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A biometric attendance system using R307 and Arduino."
+    />
+    <meta
+      name="keywords"
+      content="Arduino, R307, Biometric Attendance, Student Attendance"
+    />
+    <meta name="author" content="Aina Jesulayomi" />
+
+    <!-- Include Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <div class="text-center bg-light p-5">
+        <img src="{{ url_for('static', filename='funaablogo.webp') }}" alt="" class="img-fluid mr-3" style="max-height: 50px">
+        <h1 class="display-4 text-primary">
+          FUNAAB Student Attendance System
+        </h1>
+        <p class="text-secondary">
+          Leveraging R307 and Arduino for efficient attendance management
+        </p>
+      </div>
+      <table class="table table-bordered table-striped">
+        <thead class="thead-dark">
+          <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Matric Number</th>
+            <!-- Loop through unique dates and display them in the table header -->
+            {% for date in unique_dates %}
+            <th>{{ date }}</th>
+            {% endfor %}
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Loop through each student in the sheets variable -->
+          {% for sheet in sheets %}
+          <tr id="{{ sheet.id }}">
+            <td>{{ sheet.id }}</td>
+            <td class="first_name">{{ sheet.first_name }}</td>
+            <td class="last_name">{{ sheet.last_name }}</td>
+            <td class="matric_number">{{ sheet.matric_number or '-' }}</td>
+            <!-- Loop through the dates and display 'present' or '-' -->
+            {% for date in unique_dates %} {% set attendance = sheet.attendance
+            | selectattr('date', 'eq', date) | first %}
+            <td>
+              {% if attendance and attendance.present %} {{ attendance.time }}
+              {% else %} - {% endif %}
+            </td>
+            {% endfor %}
+            <td class="d-flex justify-content-evenly"><button class="btn btn-primary edit-btn">Edit</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <!-- Button to download csv file -->
+      <div class="text-center">
+        <a href="{{ url_for('app_views.sheet') }}" class="btn btn-primary">Download Attendance sheet</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 bg-dark text-white sticky-footer">
+      <div class="container" style="min-width: 95%;">
+        <div class="row">
+          <div class="col-3">
+            <span>Copyright &copy; 2023 Jesulayomi Aina Michael</span>
+            <span><a href="https://github.com/Jesulayomy/Veda" target="_blank">GitHub</a></span>
+          </div>
+          <div class="col-6 text-center">
+            <span>In partial fulfilment of the requirements for the award of B.Eng. degree in Electrical and Electronics Engineering, FUNAAB </span>
+          </div>
+          <div class="col-3">
+            <span class="row">Supervisor: Dr. O. I. Adebisi</span>
+            <span class="row">Head of Department: Dr. K. A. Amusa</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- CSS -->
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .sticky-footer {
+        margin-top: auto;
+      }
+    </style>
+
+    <!-- Include Bootstrap JS and jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Include your custom script -->
+    <script>
+      $(document).ready(function () {
+        $('table').on('click', '.edit-btn', function () {
+          var tr = $(this).closest('tr');
+          var id = tr.attr('id');
+          var first_name = tr.find('.first_name').text();
+          var last_name = tr.find('.last_name').text();
+          var matric_number = tr.find('.matric_number').text();
+    
+          tr.data('original', {first_name: first_name, last_name: last_name, matric_number: matric_number});
+
+          tr.find('.first_name').html(
+            '<input type="text" id="first_name" value="' + first_name + '">'
+          );
+          tr.find('.last_name').html(
+            '<input type="text" id="last_name" value="' + last_name + '">'
+          );
+          tr.find('.matric_number').html(
+            '<input type="text" id="matric_number" value="' +
+              matric_number +
+              '">'
+          );
+    
+          $(this)
+            .parent()
+            .html(
+              '<button class="btn btn-success submit-btn mr-2">Submit</button><button class="btn btn-danger cancel-btn ml-2">Cancel</button>'
+            );
+        });
+    
+        $('table').on('click', '.submit-btn', function () {
+          var tr = $(this).closest('tr');
+          var id = parseInt(tr.attr('id'));
+          var first_name = $('#first_name').val();
+          var last_name = $('#last_name').val();
+          var matric_number = $('#matric_number').val();
+          console.log(id, first_name, last_name, matric_number);
+    
+          // Send a POST request to the server
+          $.ajax({
+            url: '/api/students',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              id: id,
+              first_name: first_name,
+              last_name: last_name,
+              matric_number: matric_number
+            }),
+            success: function (response) {
+              // Update the table with the new data
+              tr.find('.first_name').text(first_name);
+              tr.find('.last_name').text(last_name);
+              tr.find('.matric_number').text(matric_number);
+    
+              // Change the Submit and Cancel buttons back to the Edit button
+              $('.submit-btn')
+                .parent()
+                .html(
+                  '<button class="btn btn-primary edit-btn">Edit</button>'
+                );
+            }
+          });
+        });
+    
+        $('table').on('click', '.cancel-btn', function () {
+          var tr = $(this).closest('tr');
+
+          // Get the original data
+          var original = tr.data('original');
+    
+          // Revert the input fields back to text using the original data
+          tr.find('.first_name').text(original.first_name);
+          tr.find('.last_name').text(original.last_name);
+          tr.find('.matric_number').text(original.matric_number);
+    
+          // Change the Submit and Cancel buttons back to the Edit button
+          $(this)
+            .parent()
+            .html('<button class="btn btn-primary edit-btn">Edit</button>');
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,2 +1,2 @@
-#define SECRET_SSID "Laptop"		// replace MySSID with your WiFi network name
-#define SECRET_PASS "123456789"	// replace MyPassword with your WiFi password
+#define SECRET_SSID "layomi"		// replace MySSID with your WiFi network name
+#define SECRET_PASS "1be36f1AINA"	// replace MyPassword with your WiFi password

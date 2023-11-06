@@ -1,35 +1,8 @@
-POST DATA TO THINGSPEAK
-            if(!this->client->print("POST /update HTTP/1.1\r\n")) return abortWriteRaw();
-            if(!writeHTTPHeader(writeAPIKey)) return abortWriteRaw();
-            if(!this->client->print("Content-Type: application/x-www-form-urlencoded\r\n")) return abortWriteRaw();
-            if(!this->client->print("Content-Length: ")) return abortWriteRaw();
-            if(!this->client->print(contentLen)) return abortWriteRaw();
-            if(!this->client->print("\r\n\r\n")) return abortWriteRaw();
 
+Wireless LAN adapter Wi-Fi:
 
-
-Get data from thingspeak
-            if(!this->client->print("GET ")) return abortReadRaw();
-            if(!this->client->print(readURL)) return abortReadRaw();
-            if(!this->client->print(" HTTP/1.1\r\n")) return abortReadRaw();
-            if(!writeHTTPHeader(readAPIKey)) return abortReadRaw();
-            if(!this->client->print("\r\n")) return abortReadRaw();
-
-
-HEADERS
-        bool writeHTTPHeader(const char * APIKey)
-        {
-     
-            if (!this->client->print("Host: api.thingspeak.com\r\n")) return false;
-            if (!this->client->print("User-Agent: ")) return false;
-            if (!this->client->print(TS_USER_AGENT)) return false;
-            if (!this->client->print("\r\n")) return false;
-            if(NULL != APIKey)
-            {
-                if (!this->client->print("X-THINGSPEAKAPIKEY: ")) return false;
-                if (!this->client->print(APIKey)) return false;
-                if (!this->client->print("\r\n")) return false;
-            }
-            
-            return true;
-        }
+   Connection-specific DNS Suffix  . :
+   Link-local IPv6 Address . . . . . : fe80::dd0a:937c:7c5d:fe01%33
+   IPv4 Address. . . . . . . . . . . : 172.20.10.3
+   Subnet Mask . . . . . . . . . . . : 255.255.255.240
+   Default Gateway . . . . . . . . . : 172.20.10.1
