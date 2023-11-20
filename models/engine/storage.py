@@ -4,8 +4,6 @@ from dotenv.main import load_dotenv
 from os import environ
 from sqlalchemy import (
     create_engine,
-    event,
-    text,
 )
 from sqlalchemy.orm import (
     sessionmaker,
@@ -23,24 +21,6 @@ from models.student import Student
 
 
 load_dotenv()
-
-
-# @event.listens_for(Book, "after_insert")
-# def update_user_uploads(mapper, connection, target):
-#     """ Updates the user's uploads """
-#     statement = text(
-#         "UPDATE users SET uploads = uploads + 1 WHERE id = '{}'".format(
-#             target.user_id))
-#     connection.execute(statement)
-
-
-# @event.listens_for(Book, "after_delete")
-# def update_user_uploads_delete(mapper, connection, target):
-#     """ Updates the user's uploads """
-#     statement = text(
-#         "UPDATE users SET uploads = uploads - 1 WHERE id = '{}'".format(
-#             target.user_id))
-#     connection.execute(statement)
 
 
 class Storage:
@@ -147,7 +127,6 @@ class Storage:
                 return session.query(cls).count()
             else:
                 count = session.query(Student).count()
-                # count += session.query(Book).count()
                 return count
 
     def add(self, obj: Student) -> None:

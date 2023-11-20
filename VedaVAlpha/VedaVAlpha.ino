@@ -7,13 +7,13 @@
  *********************************************************************************/
 
 #include <Adafruit_Fingerprint.h>  // Manages the fingerprint Library
-#include <ArduinoHttpClient.h>  // Manages HTTP requests
-#include <ArduinoJson.h>  // Parses json response from server
 #include <LiquidCrystal_I2C.h>  // LCD display
 #include <Wire.h>
 
 #include "WiFiEsp.h"  // Initializes wifi module
 #include "arduino_secrets.h"  // Contains Secrets (Wifi ssid and password)
+
+#include "SoftwareSerial.h"
 
 
 #define ATD 4  // Attend button
@@ -24,35 +24,31 @@
 #define RED 11 // Reset Indicator
 #define PWR 12 // Power Indicator
 
-#define RETRIES 10  // Number of times to scan prints before cancelling
-
-#ifndef HAVE_HWSERIAL1
-  #include "SoftwareSerial.h"
-  SoftwareSerial Serial1(6, 7); // RX, TX
-  #define ESP_BAUDRATE  19200  // Default esp communication baud rate
-#endif
 
 char ssid[] = SECRET_SSID;  // WiFi name from secrets
 char pass[] = SECRET_PASS;  // WiFi password
 
-// 172.20.10.3 is the Wireless LAN adapter Wi-Fi IPv4 Address (Required hotspot/router)
+// server[] is the Wireless LAN adapter Wi-Fi IPv4 Address (Required hotspot/router)
 // PC server running at 0.0.0.0 can connect to this (Run 'ipconfig' in cmd to get it)
-// 192.168.246.220 
-char serverAddress[] = SERVER_ADDR;  // server address
-int port = PORT;
+// 192.168.246.220 // 192.168.68.220 // 172.20.10.3 // IP may change is router restarts
+char server[] = SECRET_SERVER;  // server address
+int port = 8080;
 
-SoftwareSerial mySerial(2, 3); // Declare serial communication to fingerprint module
-Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial); // manage with Adafruit
-
-WiFiEspClient wifi;
-HttpClient client = HttpClient(wifi, serverAddress, port);  //declare a client
 int status = WL_IDLE_STATUS;
-
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
 
 uint16_t ID, nextID; // ID of attending user & nextID to be used when enrolling
 bool failed = false;  //checks if the last operation failed
+
+SoftwareSerial Serial1(6, 7); // RX, TX
+SoftwareSerial mySerial(2, 3); // Declare serial communication to fingerprint module
+Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial); // manage with Adafruit
+
+// WifiClient for ESP module
+WiFiEspClient client;
+
+// Declare lcd handler
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
 
 // Setup functions
 void setup() {
@@ -67,19 +63,14 @@ void setup() {
 
   lcd.init();  // Initialize lcd
   lcd.clear();
-  lcd.noBacklight();
+  lcd.backlight();
+  lcd.print(F("Power On"));
 
   Serial.begin(115200);  // Begin serial monitor communication
 
   finger.begin(57600);  // Initialize fingerprint
+  delay(200);
   setupFingerprint();
-
-  lcd.backlight();
-  lcd.print(F("Power On"));
-  delay(1000);
-
-  // handleEnroll();
-  // Serial1.begin(ESP_BAUDRATE);
 }
 
 // Loop function
@@ -93,23 +84,80 @@ void loop() {
 
   // Perform  an action depending on which button is pressed
   while ((digitalRead(ATD) == LOW) || (digitalRead(RST) == LOW) || (digitalRead(CNC) == LOW)) {
+    digitalWrite(GRN, HIGH);
   	if (digitalRead(ATD) == LOW) { // A student attends
-      digitalWrite(GRN, HIGH);
+      finger.LEDcontrol(true);
       handleAttend();
-      if (ID != 0) {
-        switchComms(false);
-        HttpClient client = HttpClient(wifi, serverAddress, port);
-        client.connectionKeepAlive();
-        postInfo();
+      finger.LEDcontrol(false);
+      // if ID is not 0 and the operation is not cancelled
+      if (ID != 0 && failed != true) {
+        lcd.setCursor(0, 1);
+        lcd.print(F("Connecting..."));
+        mySerial.end();
+        Serial1.begin(19200); // // before wifiinit
+        WiFi.init(&Serial1);
+        if (WiFi.status() == WL_NO_SHIELD) {
+          // don't continue
+          while (true);
+        }
+        while(WiFi.status() != WL_CONNECTED){
+          WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
+        }
+        lcd.setCursor(0, 1);
+        lcd.print(F("Sending Data"));
+
+        if (client.connect(server, 8080)) {
+          // Make a HTTP request
+          client.println("GET /api/students/" + String(ID) + " HTTP/1.1");
+          client.println("Host: 192.168.68.220");
+          client.println("Connection: close");
+          client.println();
+          String response = "";
+          while (client.available()) {
+            char c = client.read();
+            response += c;
+          }
+          lcd.clear();
+          lcd.print(F("Welcome"));
+          lcd.setCursor(0, 1);
+          lcd.print(F("> "));
+          String firstName;
+          if (extractFirstName(response, firstName)) {
+            lcd.print(firstName);
+          }
+          else {
+            lcd.print(ID);
+          }
+        }
+        else {
+          lcd.clear();
+          lcd.print(F("Failed to update"));
+          digitalWrite(RED, HIGH);
+        }
         client.stop();
-        switchComms(true);
+
+        if (client.connect(server, 8080)) {
+          // send the HTTP POST request
+          String content = "{\"id\":" + String(ID) +"}";
+          client.println("POST /api/attend HTTP/1.1");
+          client.println("Host: 192.168.68.220");
+          client.println("Accept: */*");
+          client.print("Content-Length: ");
+          client.println(content.length());
+          client.println("Content-Type: application/json");
+          client.println();
+          client.println(content);
+        }
+        client.stop();
+        WiFi.disconnect();
+        Serial1.end();
+        finger.begin(57600);
       }
-      delay(2000);
+      delay(1000);
   	  break;
     }
   	else if (digitalRead(RST) == LOW) { // Remove a student or reset the databases
       resetInfo();
-      digitalWrite(YLW, HIGH);
       while ((digitalRead(RST) == HIGH) && (digitalRead(CNC) == HIGH) && (digitalRead(ATD) == HIGH)) {
         delay(100);
       }
@@ -118,89 +166,157 @@ void loop() {
         lcd.print(F("Operation"));
         lcd.setCursor(7, 1);
         lcd.print(F("Cancelled"));
-        digitalWrite(RED, HIGH);
+        digitalWrite(YLW, HIGH);
+        delay(500);
       }
       else if (digitalRead(ATD) == LOW) {
+        finger.LEDcontrol(true);
         handleAttend();
-        if (ID != 0) {
-          HttpClient client = HttpClient(wifi, serverAddress, port);
-          client.connectionKeepAlive();
-          switchComms(false);
-          deleteStudent();
+        finger.LEDcontrol(false);
+        if (ID != 0 && failed != true) {
+          finger.deleteModel(ID);
+          lcd.setCursor(0, 1);
+          lcd.print(F("Connecting..."));
+          mySerial.end();
+          Serial1.begin(19200);
+          WiFi.init(&Serial1);
+          if (WiFi.status() == WL_NO_SHIELD) {
+            // don't continue
+            while (true);
+          }
+          while(WiFi.status() != WL_CONNECTED){
+            WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
+          }
+          lcd.setCursor(0, 1);
+          lcd.print(F("Sending Data"));
+
+          if (client.connect(server, 8080)) {
+            // Make a HTTP request
+            client.println("DELETE /api/students/" + String(ID) + " HTTP/1.1");
+            client.println("Host: 192.168.68.220");
+            client.println("Connection: close");
+            client.println();
+            lcd.clear();
+            lcd.print(F("Goodbye!"));
+          }
+          else {
+            lcd.clear();
+            lcd.print(F("Failed!"));
+            digitalWrite(RED, HIGH);
+          }
           client.stop();
-          switchComms(true);
-          digitalWrite(GRN, HIGH);
-        }
-        else {
-          lcd.clear();
-          lcd.print(F("Failed!"));
-          digitalWrite(RED, HIGH);
+          WiFi.disconnect();
+          Serial1.end();
+          finger.begin(57600);
         }
       }
       else if (digitalRead(RST) == LOW) {
+        finger.LEDcontrol(true);
         finger.emptyDatabase();
         lcd.print(F("Sucessfully"));
         lcd.setCursor(11, 1);
         lcd.print(F("Reset"));
-        HttpClient client = HttpClient(wifi, serverAddress, port);
-        client.connectionKeepAlive();
-        switchComms(false);
-        client.del("/api/students");
+        finger.LEDcontrol(false);
+        mySerial.end();
+        Serial1.begin(19200);
+        WiFi.init(&Serial1);
+        if (WiFi.status() == WL_NO_SHIELD) {
+          // don't continue
+          while (true);
+        }
+        while(WiFi.status() != WL_CONNECTED){
+          WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
+        }
+        lcd.setCursor(0, 1);
+        lcd.print(F("Sending Data"));
+
+        if (client.connect(server, 8080)) {
+          // Make a HTTP request
+          client.println("DELETE /api/students HTTP/1.1");
+          client.println("Host: 192.168.68.220");
+          client.println("Connection: close");
+          client.println();
+          lcd.clear();
+          lcd.print(F("Database"));
+          lcd.setCursor(7, 1);
+          lcd.print(F("Reset!"));
+        }
+        else {
+          lcd.clear();
+          lcd.print(F("DB Failed!"));
+          digitalWrite(RED, HIGH);
+        }
         client.stop();
-        switchComms(true);
-        digitalWrite(GRN, HIGH);
+        WiFi.disconnect();
+        Serial1.end();
+        finger.begin(57600);
       }
       delay(1000);
       break;
   	}
   	else if (digitalRead(CNC) == LOW) {
-      digitalWrite(GRN, HIGH);
+      finger.LEDcontrol(true);
       handleEnroll();
-      HttpClient client = HttpClient(wifi, serverAddress, port);
-      client.connectionKeepAlive();
-      switchComms(false);
-      postStudent();
-      client.stop();
-      switchComms(true);
+      finger.LEDcontrol(false);
+      if (nextID != 0 && failed != true) {
+        lcd.setCursor(0, 1);
+        lcd.print(F("Connecting..."));
+        mySerial.end();
+        Serial1.begin(19200);
+        WiFi.init(&Serial1);
+        if (WiFi.status() == WL_NO_SHIELD) {
+          // don't continue
+          while (true);
+        }
+        while(WiFi.status() != WL_CONNECTED){
+          WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network
+        }
+        lcd.setCursor(0, 1);
+        lcd.print(F("Sending Data"));
+
+        if (client.connect(server, 8080)) {
+          // send the HTTP POST request
+          String content = "{\"id\":" + String(nextID) +"}";
+          client.println("POST /api/students HTTP/1.1");
+          client.println("Host: 192.168.68.220");
+          client.println("Accept: */*");
+          client.print("Content-Length: ");
+          client.println(content.length());
+          client.println("Content-Type: application/json");
+          client.println();
+          client.println(content);
+          lcd.clear();
+          lcd.print(F("Successful!"));
+          lcd.setCursor(0, 1);
+          lcd.print("Please Attend...");
+        }
+        client.stop();
+        WiFi.disconnect();
+        Serial1.end();
+        finger.begin(57600);
+      }
+      delay(1000);
       break;
   	}
   }
-  switchComms(true);
+  failed = false;
 }
 
-// Switches the serial communication
-void switchComms(bool toFingerprint) {
-  if (toFingerprint) {
-    // Switch to fingerprint module
-    WiFi.disconnect();
-    Serial1.end();
-    finger.begin(57600);
-    lcd.clear();
-    if (finger.verifyPassword()) {
-      lcd.print(F("Sensor: Active"));
-    } else {
-      Serial.println(F("No sensor :("));
-      lcd.print(F("No Sensor :("));
-      while (1) { delay(1); }
-    }
-  } else {
-    // Switch to ESP WiFi module
-    mySerial.end(); // Close fingerprint module communication
-    status = 0;
-    Serial1.begin(ESP_BAUDRATE); // Set ESP module baud rate
-    startWifi();
+// Extract the first name form the json string
+bool extractFirstName(const String &json, String &result) {
+  int startIndex = json.indexOf("\"first_name\":\"");
+  if (startIndex == -1) {
+    return false; // "first_name" not found
   }
-}
+  startIndex += 14; // Move past the key
 
-// Starts the wifi connection
-void startWifi() {
-  WiFi.init(&Serial1);  // Initialize wifi
-
-  while ( status != WL_CONNECTED) {
-    Serial.print(F("Connecting to "));
-    Serial.println(ssid);
-    status = WiFi.begin(ssid, pass);
+  int endIndex = json.indexOf('"', startIndex);
+  if (endIndex == -1) {
+    return false; // No closing double quote found
   }
+
+  result = json.substring(startIndex, endIndex);
+  return true;
 }
 
 // prints reset information 
@@ -209,29 +325,7 @@ void resetInfo () {
   lcd.print(F("ATD: One Student"));
   lcd.setCursor(0, 1);
   lcd.print(F("RST: All Students"));
-  delay(1000);
-}
-
-// Deletes the student from the database
-void deleteStudent() {
-  client.del("/api/students/" + String(ID));
-  int statusCode = client.responseStatusCode();
-  String response = client.responseBody();
-
-  DynamicJsonDocument doc(200);
-  DeserializationError error = deserializeJson(doc, response);
-
-  Serial.print(F("Status code: "));
-  Serial.println(statusCode);
-
-  const char* matric_number = doc["matric_number"];
-
-  lcd.clear();
-  lcd.print(F("Removed "));
-  lcd.print(matric_number);
-  digitalWrite(GRN, HIGH);
-
-  delay(2000);
+  delay(500);
 }
 
 // Handles the enrollment proedure
@@ -240,7 +334,7 @@ void handleEnroll() {
   lcd.print(F("CNC: Cancel"));
   lcd.setCursor(0, 1);
   lcd.print(F("ATD: Enroll"));
-  delay(1000);
+  delay(500);
   while ((digitalRead(ATD) == HIGH) && (digitalRead(CNC) == HIGH)) {
     delay(100);
   }
@@ -250,11 +344,15 @@ void handleEnroll() {
     lcd.print(F("Operation"));
     lcd.setCursor(7, 1);
     lcd.print(F("Cancelled"));
+    failed = true;
     digitalWrite(YLW, HIGH);
-    delay(2000);
+    delay(1000);
 	}
   else if (digitalRead(ATD) == LOW) {
     nextID = getNextID();
+    lcd.clear();
+    lcd.print(F("Enrolling # "));
+    lcd.print(nextID);
     while (!getFingerprintEnroll()) {
       if (digitalRead(CNC) == LOW) {
         lcd.clear();
@@ -266,100 +364,51 @@ void handleEnroll() {
         break;
       }
     }
+    
   }
-}
-
-// Sends a new student ID to the api
-void postStudent() {
-  if (!failed) {
-    lcd.clear();
-    lcd.print(F("Successful!"));
-    String contentType = "application/json";
-    String postData = "{\"id\":" + String(nextID) + "}";
-    client.post("/api/students", contentType, postData);
-    int statusCode = client.responseStatusCode();
-    String response = client.responseBody();
-
-    // Serial.println(F("Response:"));
-    // Serial.println(response);
-    digitalWrite(YLW, HIGH);
-    delay(2000);
-  }
-  failed = false;
 }
 
 // Begin the loop
 void preamble() {
   lcd.clear();
-  lcd.print(F("<Attend Reset>"));
+  lcd.print(F("Attend     Reset"));
   lcd.setCursor(0, 1);
+  lcd.print(F("     Enroll     "));
   // Attend, Cancel or Enroll, Reset
-  lcd.print(F("Cancel/Enroll"));
   digitalWrite(GRN, LOW);
   digitalWrite(YLW, LOW);
   digitalWrite(RED, LOW);
+  finger.LEDcontrol(false);
 }
 
 // Handles attend button press
 void handleAttend() {
   lcd.clear();
-  lcd.print(F("Place finger!"));
-  for (int i = 0; i < RETRIES; i++) {
+  lcd.print(F("Place finger..."));
+  
+  while (true) {
     // ID = readnumber();
-    ID = getFingerprintIDez();
+    ID = getFingerprintID();
     if (ID != 0) {
       break;
     }
-    lcd.setCursor(i, 1);
-    lcd.print(F("."));
-    delay(500);
+    if (digitalRead(CNC) == LOW) {
+      lcd.clear();
+      lcd.print(F("Operation"));
+      lcd.setCursor(7, 1);
+      lcd.print(F("Cancelled"));
+      digitalWrite(YLW, HIGH);
+      failed = true;
+      break;
+    }
   }
-  if (ID == 0) {
+  if (ID == 0 && !failed) {
     lcd.clear();
     lcd.print(F("Could not detect"));
     digitalWrite(RED, HIGH);
   }
+  
 }
-
-
-uint8_t readnumber(void) {
-  uint8_t num = 0;
-
-  while (num == 0) {
-    while (! Serial.available());
-    num = Serial.parseInt();
-  }
-  return num;
-}
-
-// Handles the attend post request
-void postInfo() {
-  String contentType = "application/json";
-  String postData = "{\"id\":" + String(ID) + "}";
-
-  client.post("/api/attend", contentType, postData);
-  int statusCode = client.responseStatusCode();
-  String response = client.responseBody();
-
-  Serial.print(F("Status code: "));
-  Serial.println(statusCode);
-
-  DynamicJsonDocument doc(200);
-  DeserializationError error = deserializeJson(doc, response);
-
-  const char* first_name = doc["first_name"];
-  const char* matric_number = doc["matric_number"];
-
-  lcd.clear();
-  lcd.print(F("Welcome "));
-  lcd.print(matric_number);
-  lcd.setCursor(0, 1);
-  lcd.print(first_name);
-
-  // Serial.println("Response: ");
-  // Serial.println(response);
-}
-
 
 /**
  * Verifies the sensor is connected and prints the number of templates
@@ -370,7 +419,6 @@ void setupFingerprint() {
   if (finger.verifyPassword()) {
     lcd.print(F("Sensor: Active"));
   } else {
-    Serial.println(F("No sensor :("));
     lcd.print(F("No Sensor :("));
     while (1) { delay(1); }
     return;
@@ -378,22 +426,24 @@ void setupFingerprint() {
 
   finger.getParameters();
 
-  delay(2000);
+  delay(500);
   finger.getTemplateCount();
+  lcd.clear();
+  // Prnt the amount of data stored in the fingerprint sensor
   if (finger.templateCount == 0) {
-    lcd.clear();
     lcd.print(F("No data"));
   }
   else {
-    lcd.clear();
     lcd.print(F("Students: "));
     lcd.setCursor(10, 0);
     lcd.print(finger.templateCount);
     lcd.setCursor(12, 0);
     lcd.print(F("/"));
     lcd.setCursor(13, 0);
-    lcd.print(finger.capacity);
+    lcd.print(300);
+    delay(1000);
   }
+  finger.LEDcontrol(false);
 }
 
 // Gets the next available ID to use in storing a student
@@ -414,46 +464,24 @@ uint16_t getNextID() {
   return 0;
 }
 
-// returns 0 if failed, otherwise returns ID #
-int getFingerprintIDez() {
-  uint8_t p = finger.getImage();
-  if (p != FINGERPRINT_OK)  return 0;
-
-  p = finger.image2Tz();
-  if (p != FINGERPRINT_OK)  return 0;
-
-  p = finger.fingerFastSearch();
-  if (p != FINGERPRINT_OK)  return 0;
-
-  // found a match!
-  lcd.clear();
-  lcd.print(F("ID: "));
-  lcd.print(finger.fingerID);
-  lcd.setCursor(0, 1);
-  lcd.print(F("Confidence: "));
-  lcd.print(finger.confidence);
-
-  return finger.fingerID;
-}
-
 // Enrolls a new id using nextID
 uint8_t getFingerprintEnroll() {
   int p = -1;
-  lcd.clear();
-  lcd.print(F("Enrolling as # "));
-  lcd.print(nextID);
-  delay(1000);
-  lcd.setCursor(0, 1);
-  lcd.print(F("Place Finger"));
+  failed = true;
   while (p != FINGERPRINT_OK) {
+    if (digitalRead(CNC) == LOW) {
+      return;
+    }
     p = finger.getImage();
+    lcd.setCursor(0, 1);
+    lcd.print(F("Place Finger..."));
     switch (p) {
     case FINGERPRINT_OK:
+      lcd.clear();
       lcd.print(F("Image taken"));
       break;
     case FINGERPRINT_NOFINGER:
-      lcd.print(F("."));
-      Serial.print(F("No Finger"));
+      Serial.println(F("No Finger"));
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       Serial.print(F("Packet"));
@@ -465,6 +493,7 @@ uint8_t getFingerprintEnroll() {
       Serial.println(F("UNKNOWN"));
       break;
     }
+    delay(100);
   }
 
   // OK success!
@@ -490,9 +519,9 @@ uint8_t getFingerprintEnroll() {
   p = 0;
   while (p != FINGERPRINT_NOFINGER) {
     p = finger.getImage();
-    lcd.print(F("."));
   }
   p = -1;
+  lcd.clear();
   lcd.setCursor(0, 1);
   lcd.print(F("Place same finger"));
   while (p != FINGERPRINT_OK) {
@@ -501,7 +530,6 @@ uint8_t getFingerprintEnroll() {
     case FINGERPRINT_OK:
       break;
     case FINGERPRINT_NOFINGER:
-      lcd.print(F("."));
       break;
     case FINGERPRINT_PACKETRECIEVEERR:
       break;
@@ -517,7 +545,6 @@ uint8_t getFingerprintEnroll() {
   p = finger.image2Tz(2);
   switch (p) {
     case FINGERPRINT_OK:
-      lcd.print(F("Image converted"));
       break;
     case FINGERPRINT_IMAGEMESS:
       return p;
@@ -532,7 +559,6 @@ uint8_t getFingerprintEnroll() {
   }
 
   // OK converted!
-  lcd.print(F("Model for #"));  lcd.print(nextID);
 
   p = finger.createModel();
   lcd.clear();
@@ -543,6 +569,7 @@ uint8_t getFingerprintEnroll() {
     return p;
   } else if (p == FINGERPRINT_ENROLLMISMATCH) {
     lcd.print(F("MISMATCH"));
+    delay(250);
     return p;
   } else {
     lcd.print(F("ERR"));
@@ -565,5 +592,75 @@ uint8_t getFingerprintEnroll() {
     return p;
   }
 
+  failed = false;
   return true;
+}
+
+// Returns the ID or 0 if there is an error
+uint8_t getFingerprintID() {
+  uint8_t p = finger.getImage();
+  switch (p) {
+    case FINGERPRINT_OK:
+      lcd.clear();
+      lcd.print(F("Captured"));
+      Serial.println("Image taken");
+      break;
+    case FINGERPRINT_NOFINGER:
+      Serial.println("No finger");
+      return 0;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("Comm error");
+      return 0;
+    case FINGERPRINT_IMAGEFAIL:
+      Serial.println("Imaging error");
+      return 0;
+    default:
+      Serial.println("Unknown err");
+      return 0;
+  }
+
+  // OK success!
+
+  p = finger.image2Tz();
+  switch (p) {
+    case FINGERPRINT_OK:
+      Serial.println("Image converted");
+      break;
+    case FINGERPRINT_IMAGEMESS:
+      Serial.println("Image too messy");
+      return 0;
+    case FINGERPRINT_PACKETRECIEVEERR:
+      Serial.println("Comm error");
+      return 0;
+    case FINGERPRINT_FEATUREFAIL:
+      Serial.println("No features");
+      return 0;
+    case FINGERPRINT_INVALIDIMAGE:
+      Serial.println("No features2");
+      return 0;
+    default:
+      Serial.println("Unknown error");
+      return 0;
+  }
+  // OK converted!
+  p = finger.fingerSearch();
+  if (p == FINGERPRINT_OK) {
+    Serial.println("Found a match!");
+  } else if (p == FINGERPRINT_PACKETRECIEVEERR) {
+    Serial.println("Comm error");
+    return 0;
+  } else if (p == FINGERPRINT_NOTFOUND) {
+    lcd.clear();
+    lcd.print(F("No match"));
+    Serial.println("No match");
+    return 0;
+  } else {
+    Serial.println("Unknown error");
+    return 0;
+  }
+
+  lcd.clear();
+  lcd.print(F("Found ID #")); lcd.print(finger.fingerID);
+
+  return finger.fingerID;
 }

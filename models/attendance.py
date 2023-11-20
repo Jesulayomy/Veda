@@ -10,7 +10,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from typing import Any
 from models.base import (
     BaseModel,
     Base,
@@ -29,7 +28,7 @@ class Attendance(BaseModel, Base):
 
     student_id = Column(Integer, ForeignKey('students.id'))
     time = Column(String(10))
-    date = Column(String(10))  # You can use a more suitable date type like Date
+    date = Column(String(10))
     present = Column(Boolean, default=False)
 
     student = relationship('Student', back_populates='attendances')

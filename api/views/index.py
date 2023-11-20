@@ -1,6 +1,5 @@
 """ This module contains the index view """
 import csv
-import json
 
 from api.views import app_views
 from flask import jsonify, render_template, send_file

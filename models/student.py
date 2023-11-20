@@ -5,7 +5,6 @@ from sqlalchemy import (
     String,
     Column,
     Integer,
-    DateTime,
 )
 from sqlalchemy.orm import relationship
 

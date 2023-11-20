@@ -1,5 +1,4 @@
 """ This module contains the student view """
-import os
 
 from flask import (
     jsonify,
@@ -10,6 +9,7 @@ from flask import (
 
 from api.views import app_views
 from models import storage
+from models.attendance import Attendance
 from models.student import Student
 
 
@@ -36,7 +36,7 @@ def delete_student(student_id):
     if not student:
         abort(404, 'Student does not exist')
     storage.delete(student)
-    return jsonify(student.to_dict()), 200
+    return jsonify({}), 200
 
 
 @app_views.route('/students', methods=['POST'], strict_slashes=False)
@@ -49,6 +49,23 @@ def post_student():
         abort(400, 'Missing id')
     student = Student(**data)
     storage.add(student)
+    if 'matric_number' in data:
+        with storage.session_scope() as session:
+            existing_student = session.query(Student).filter(
+                Student.matric_number == data['matric_number'],Student.id != data['id']).first()
+            if existing_student:
+                student = session.merge(student)
+                setattr(student, 'first_name', existing_student.first_name)
+                setattr(student, 'last_name', existing_student.last_name)
+                attendances = session.query(Attendance).filter(
+                    Attendance.student_id == existing_student.id
+                ).all()
+                for attendance in attendances:
+                    setattr(attendance, 'student_id', student.id)
+                    session.add(attendance)
+                    session.commit()
+                storage.add(student)
+                storage.delete(existing_student)
     response = make_response(jsonify(student.to_dict()), 201)
     return response
 

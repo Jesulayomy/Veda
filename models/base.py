@@ -2,16 +2,13 @@
 from datetime import datetime
 from sqlalchemy import (
     Column,
-    String,
     DateTime,
-    Integer,
 )
 from sqlalchemy.orm import declarative_base
 from typing import (
     Dict,
     Any,
 )
-from uuid import uuid4
 
 
 Base = declarative_base()
