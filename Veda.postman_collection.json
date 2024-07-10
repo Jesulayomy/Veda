@@ -1,0 +1,1199 @@
+{
+	"info": {
+		"_postman_id": "582b80da-ea21-424e-b3a0-9d34662887b4",
+		"name": "Veda",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28586598"
+	},
+	"item": [
+		{
+			"name": "Analytics",
+			"item": [
+				{
+					"name": "Get Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            status: {",
+									"                type: 'string'",
+									"            }",
+									"        },",
+									"        required: ['status'],",
+									"        additionalProperties: false,",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            attendances: {",
+									"                type: 'number'",
+									"            },",
+									"            students: {",
+									"                type: 'number'",
+									"            }",
+									"        },",
+									"        required: ['attendances', 'students'],",
+									"        additionalProperties: false,",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"stats"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Students",
+			"item": [
+				{
+					"name": "Create New Student",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            matric_number: {",
+									"                type: 'string'",
+									"            }",
+									"        },",
+									"        required: ['id', 'matric_number'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Student ID matches\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.expect(response.id).to.eql(parseInt(pm.variables.replaceIn('{{studentID}}')));",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let studentID = pm.variables.replaceIn('{{$randomInt}}');",
+									"",
+									"pm.collectionVariables.set(",
+									"    \"studentID\",",
+									"    studentID",
+									");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": {{studentID}},\n    \"matric_number\": \"20000{{studentID}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/students",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Student",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            matric_number: {",
+									"                type: 'string'",
+									"            }",
+									"        },",
+									"        required: ['id', 'matric_number'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Student ID matches\", () => {",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.expect(response.id).to.eql(parseInt(pm.variables.replaceIn('{{studentID}}')));",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students/:studentID",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students",
+								":studentID"
+							],
+							"variable": [
+								{
+									"key": "studentID",
+									"value": "{{studentID}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Student",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"let first_name = pm.variables.replaceIn('{{$randomFirstName}}');",
+									"let last_name = pm.variables.replaceIn('{{$randomLastName}}');",
+									"",
+									"pm.collectionVariables.set(\"firstName\", first_name);",
+									"pm.collectionVariables.set(\"lastName\", last_name);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            matric_number: {",
+									"                type: 'string'",
+									"            },",
+									"            first_name: {",
+									"                type: 'string'",
+									"            },",
+									"            last_name: {",
+									"                type: 'string'",
+									"            },",
+									"        },",
+									"        required: ['id', 'matric_number', 'first_name', 'last_name'],",
+									"        additionalProperties: false,",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Student ID matches\", () => {",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.expect(response.id).to.eql(parseInt(pm.variables.replaceIn('{{studentID}}')));",
+									"});",
+									"",
+									"pm.test(\"First name matches\", () => {",
+									"    pm.expect(response).to.have.property('first_name');",
+									"    pm.expect(response.first_name).to.be.a('string');",
+									"    pm.expect(response.first_name).to.eql(pm.variables.replaceIn('{{firstName}}'));",
+									"});",
+									"",
+									"pm.test(\"last name matches\", () => {",
+									"    pm.expect(response).to.have.property('last_name');",
+									"    pm.expect(response.last_name).to.be.a('string');",
+									"    pm.expect(response.last_name).to.eql(pm.variables.replaceIn('{{lastName}}'));",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": {{studentID}},\r\n    \"last_name\": \"{{lastName}}\",\r\n    \"first_name\": \"{{firstName}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/students",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Students",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'array',",
+									"        items: {",
+									"            type: 'object',",
+									"            properties: {",
+									"                id: {",
+									"                    type: 'number'",
+									"                },",
+									"                first_name: {",
+									"                    type: 'string'",
+									"                },",
+									"                last_name: {",
+									"                    type: 'string'",
+									"                },",
+									"                matric_number: {",
+									"                    type: 'string'",
+									"                },",
+									"            },",
+									"            required: ['id', 'first_name', 'last_name', 'matric_number'],",
+									"            additionalProperties: false",
+									"        }",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/students",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Attendance",
+			"item": [
+				{
+					"name": "Attend Class",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            date: {",
+									"                type: 'string'",
+									"            },",
+									"            time: {",
+									"                type: 'string'",
+									"            },",
+									"            present: {",
+									"                type: 'boolean'",
+									"            },",
+									"        },",
+									"        required: ['id', 'date', 'time', 'present'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Attendance ID\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.collectionVariables.set(\"attendanceID\", response.id);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"student_id\": {{studentID}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/attend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Attendances",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'array',",
+									"        items: {",
+									"            type: 'object',",
+									"            properties: {",
+									"                id: {",
+									"                    type: 'number'",
+									"                },",
+									"                matric_number: {",
+									"                    type: 'string'",
+									"                },",
+									"                last_name: {",
+									"                    type: 'string'",
+									"                },",
+									"                first_name: {",
+									"                    type: 'string'",
+									"                },",
+									"                attendance: {",
+									"                    type: 'array',",
+									"                    items: {",
+									"                        type: 'object',",
+									"                        properties: {",
+									"                            date: {",
+									"                                type: 'string'",
+									"                            },",
+									"                            time: {",
+									"                                type: 'string'",
+									"                            },",
+									"                            present: {",
+									"                                type: 'boolean'",
+									"                            },",
+									"                        },",
+									"                        required: ['date', 'time', 'present'],",
+									"                        additionalProperties: false,",
+									"                    }",
+									"                },",
+									"            },",
+									"            required: ['id', 'matric_number', 'last_name', 'first_name', 'attendance'],",
+									"            additionalProperties: false,",
+									"        },",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/attendances",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attendances"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Attendance Record",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            date: {",
+									"                type: 'string'",
+									"            },",
+									"            time: {",
+									"                type: 'string'",
+									"            },",
+									"            present: {",
+									"                type: 'boolean'",
+									"            },",
+									"        },",
+									"        required: ['id', 'date', 'time', 'present'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Attendance ID\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.expect(response.id).to.eql(parseInt(pm.collectionVariables.get('attendanceID')));",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomNum() {",
+									"    return pm.variables.replaceIn('{{$randomInt}}') % 10",
+									"}",
+									"",
+									"let date = '2023-11-' + String(randomNum() % 3) + String(randomNum());",
+									"let time = String(randomNum() % 2) + String(randomNum()) + ':' + String(randomNum() % 6) + String(randomNum());",
+									"",
+									"pm.collectionVariables.set('tempDate', date);",
+									"pm.collectionVariables.set('tempTime', time);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"student_id\": {{studentID}},\r\n    \"id\": {{attendanceID}},\r\n    \"date\": \"{{tempDate}}\",\r\n    \"time\": \"{{tempTime}}\",\r\n    \"present\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/attend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Attend Class 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            date: {",
+									"                type: 'string'",
+									"            },",
+									"            time: {",
+									"                type: 'string'",
+									"            },",
+									"            present: {",
+									"                type: 'boolean'",
+									"            },",
+									"        },",
+									"        required: ['id', 'date', 'time', 'present'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Attendance ID\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.collectionVariables.set(\"attendanceID\", response.id);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"student_id\": {{studentID}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/attend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Attendance 2 Record",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            date: {",
+									"                type: 'string'",
+									"            },",
+									"            time: {",
+									"                type: 'string'",
+									"            },",
+									"            present: {",
+									"                type: 'boolean'",
+									"            },",
+									"        },",
+									"        required: ['id', 'date', 'time', 'present'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Attendance ID\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.expect(response.id).to.eql(parseInt(pm.collectionVariables.get('attendanceID')));",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomNum() {",
+									"    return pm.variables.replaceIn('{{$randomInt}}') % 10",
+									"}",
+									"",
+									"let date = '2023-11-' + String(randomNum() % 3) + String(randomNum());",
+									"let time = String(randomNum() % 2) + String(randomNum()) + ':' + String(randomNum() % 6) + String(randomNum());",
+									"",
+									"pm.collectionVariables.set('tempDate', date);",
+									"pm.collectionVariables.set('tempTime', time);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"student_id\": {{studentID}},\r\n    \"id\": {{attendanceID}},\r\n    \"date\": \"{{tempDate}}\",\r\n    \"time\": \"{{tempTime}}\",\r\n    \"present\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/attend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Attend Class 3",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            date: {",
+									"                type: 'string'",
+									"            },",
+									"            time: {",
+									"                type: 'string'",
+									"            },",
+									"            present: {",
+									"                type: 'boolean'",
+									"            },",
+									"        },",
+									"        required: ['id', 'date', 'time', 'present'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Attendance ID\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.collectionVariables.set(\"attendanceID\", response.id);",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"student_id\": {{studentID}}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/attend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change Attendance 3 Record",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"",
+									"pm.test(\"Status is 201\", () => {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response is JSON\", () => {",
+									"    pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test(\"Schema is valid\", () => {",
+									"    const schema = {",
+									"        type: 'object',",
+									"        properties: {",
+									"            id: {",
+									"                type: 'number'",
+									"            },",
+									"            date: {",
+									"                type: 'string'",
+									"            },",
+									"            time: {",
+									"                type: 'string'",
+									"            },",
+									"            present: {",
+									"                type: 'boolean'",
+									"            },",
+									"        },",
+									"        required: ['id', 'date', 'time', 'present'],",
+									"    };",
+									"    pm.response.to.have.jsonSchema(schema);",
+									"});",
+									"",
+									"pm.test(\"Attendance ID\", () => {",
+									"    pm.expect(response.id).to.be.a('number');",
+									"    pm.expect(response.id).to.eql(parseInt(pm.collectionVariables.get('attendanceID')));",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"function randomNum() {",
+									"    return pm.variables.replaceIn('{{$randomInt}}') % 10",
+									"}",
+									"",
+									"let date = '2023-11-' + String(randomNum() % 3) + String(randomNum());",
+									"let time = String(randomNum() % 2) + String(randomNum()) + ':' + String(randomNum() % 6) + String(randomNum());",
+									"",
+									"pm.collectionVariables.set('tempDate', date);",
+									"pm.collectionVariables.set('tempTime', time);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"student_id\": {{studentID}},\r\n    \"id\": {{attendanceID}},\r\n    \"date\": \"{{tempDate}}\",\r\n    \"time\": \"{{tempTime}}\",\r\n    \"present\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/attend",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"attend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Attendance Sheet",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const parse = require('csv-parse/lib/sync');",
+									"const parsedBody = parse(pm.response.text(), {relax_column_count: true});",
+									"",
+									"pm.test(\"Status is 200\", () => {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Correct CSV response\", function () {",
+									"    // Check that we have at least 1 row",
+									"    pm.expect(parsedBody).to.have.length.above(0);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sheet",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sheet"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://veda.jesulayomi.tech",
+			"type": "string"
+		},
+		{
+			"key": "studentID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "firstName",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "lastName",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "attendanceID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "tempDate",
+			"value": ""
+		},
+		{
+			"key": "tempTime",
+			"value": ""
+		}
+	]
+}
