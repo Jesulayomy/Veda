@@ -28,17 +28,20 @@ class Student(BaseModel, Base):
 
     first_name = Column(
         String(63),
-        nullable=True
+        nullable=False,
+        default=''
     )
 
     last_name = Column(
         String(63),
-        nullable=True
+        nullable=False,
+        default=''
     )
 
     matric_number = Column(
         String(63),
-        nullable=True
+        nullable=True,
+        default=''
     )
 
     attendances = relationship(
@@ -51,7 +54,7 @@ class Student(BaseModel, Base):
         """ Sets attributes for the user class """
 
         if name == "first_name" or name == "last_name":
-            if not value.isalpha():
+            if not value.isalpha() and value != '':
                 raise ValueError("Names must contain only letters")
 
         super().__setattr__(name, value)

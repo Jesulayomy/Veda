@@ -5,6 +5,7 @@ from flask import (
     Flask,
     make_response,
     jsonify,
+    redirect,
 )
 from flask_cors import CORS
 from models import storage
@@ -38,10 +39,14 @@ def not_found(err):
     response = make_response(jsonify({'Error': 'Not Found'}), 404)
     return response
 
+@app.route('/', methods=['GET'], strict_slashes=False)
+def home():
+    """Redirects to the /api route"""
+    return redirect('/api/')
 
 if __name__ == '__main__':
     load_dotenv()
     app.run(
         host='0.0.0.0',
-        port=environ.get('VEDA_PORT', default='8080'),
+        port=environ.get('VEDA_PORT', default='8099'),
         threaded=True)

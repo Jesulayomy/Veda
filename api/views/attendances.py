@@ -37,7 +37,7 @@ def new_attend():
     data['time'] = datetime.utcnow().strftime('%H:%M')
     attendance = Attendance(**data)
     storage.add(attendance)
-    response = make_response(jsonify(student.to_dict()), 201)
+    response = make_response(jsonify(attendance.to_dict()), 201)
     return response
 
 

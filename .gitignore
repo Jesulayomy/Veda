@@ -1,4 +1,4 @@
 __pycache__/
 *.csv
 .env
-regen.sql
+.venv/
