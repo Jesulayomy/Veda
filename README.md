@@ -1,3 +1,5 @@
+[![Tests](https://github.com/Jesulayomy/Veda/actions/workflows/postman.yml/badge.svg)](https://github.com/Jesulayomy/Veda/actions/workflows/postman.yml)
+
 # Veda - Web based biometric attendance system with database storage
 
 ## Overview
